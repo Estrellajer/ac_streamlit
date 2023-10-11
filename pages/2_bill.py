@@ -1,17 +1,11 @@
 import streamlit as st
 from typing import List
 import datetime
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
 import time
-from streamlit_autorefresh import st_autorefresh
 from utils import utils
 from utils.utils import post
 import threading
 
-plt.rcParams["font.sans-serif"] = ["SimHei"]  # 设置字体
-plt.rcParams["axes.unicode_minus"] = False  # 解决图像中的“-”负号的乱码问题
 
 st.set_page_config(
     page_title="查看报表",
@@ -53,11 +47,9 @@ def transform():
 
 def query_ac_report(ac_id, start_date, end_date):
     my_json = {'ac_id': ac_id, 'start_date': start_date, 'end_date': end_date}
-    data = utils.post(my_json, "/admin/queryACReport", st.session_state['token'])
-    if data['code'] == 1:
-        target = data['data']
-        target['ac_id'] = ac_id
-        return target
+    data =1
+    if data == 1:
+        return
     else:
         st.error(data['message'])
 
@@ -73,32 +65,13 @@ def display_charge(data_list, labels):
 
 def send_post_request(ac_id, start_date, end_date, data_list, header):
     my_json = {'ac_id': ac_id, 'start_date': start_date, 'end_date': end_date}
-    data = utils.post(my_json, "/admin/queryACReport", st.session_state['token'])
-    if data['code'] == 1:
-        target = data['data']
-        target['ac_id'] = ac_id
-        data_list.append(target)
+    data =1
+    if data == 1:
+        return
     else:
         data_list = None
         return data_list
 
-def get_data(start_date, end_date):
-    start_date = start_date.strftime("%Y-%m-%d")
-    end_date = end_date.strftime("%Y-%m-%d")
-    high_speed_ac_list = []
-    medium_speed_ac_list = []
-    low_speed_ac_list = []
-    for high_speed_ac_id in st.session_state['high_speed_ac']:
-        high_speed_ac_list.append(query_ac_report(high_speed_ac_id, start_date, end_date))
-    for medium_speed_ac_id in st.session_state['medium_speed_ac']:
-        medium_speed_ac_list.append(query_ac_report(medium_speed_ac_id, start_date, end_date))
-    for low_speed_ac_id in st.session_state['low_speed_ac']:
-        low_speed_ac_list.append(query_ac_report(low_speed_ac_id, start_date, end_date))
-    high_speed_list = sorted(high_speed_ac_list, key=lambda x: x['ac_id'])
-    medium_speed_list = sorted(medium_speed_ac_list, key=lambda x: x['ac_id'])
-    low_speed_list = sorted(low_speed_ac_list, key=lambda x: x['ac_id'])
-    data_list = high_speed_list + medium_speed_list + low_speed_list
-    return data_list
 
 if st.session_state['stage'] == 'login':
     st.title('管理员登录')
@@ -106,31 +79,14 @@ if st.session_state['stage'] == 'login':
     password = st.text_input("密码")
 
     def login():
-        if password:
-            my_json = {"password": password}
-            data = utils.post(my_json, "/admin/login")
-            if data['code'] == 1:
-                st.session_state['token'] = data['data']['token']
-                st.session_state['stage'] = 'show_report'
-                token = st.session_state.get('token')
-                headers = {
-                    "Authorization": token
-                }
-                data = utils.post({}, "/admin/queryACAmount", token)
-                if data['code'] == 1:
-                    st.session_state['amount'] = data['data']['amount']
-                    st.session_state['high_speed_ac'] = data['data']['high_speed_ac']
-                    st.session_state['medium_speed_ac'] = data['data']['medium_speed_ac']
-                    st.session_state['low_speed_ac'] = data['data']['low_speed_ac']
-                else:
-                    st.error(data['message'])
-            else:
-                st.error(data['message'])
+        if password == '123':
+            st.balloons()
         else:
             st.error("密码不能为空")
             return
 
     st.button("登录", on_click=login)
+
 else:
     st.title("查看报表")
     col1, col2 = st.columns(2)
@@ -150,13 +106,10 @@ else:
     end_date = start_date + Days
     tabs = ['费用', '充电']
     tab1, tab2, = st.tabs(tabs)
-    data_list = get_data(start_date, end_date)
     ac_list, labels = transform()
     with tab1:
         st.subheader("报表时间" + str(start_date) + "~" + str(end_date))
-        display_fee(data_list, labels)
     with tab2:
         st.subheader("报表时间" + str(start_date) + "~" + str(end_date))
-        display_charge(data_list, labels)
-    time.sleep(3)
-    st.experimental_rerun()
+
+
